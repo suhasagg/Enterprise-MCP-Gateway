@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: mcp
+      POSTGRES_DB: mcp
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U mcp"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  java-crm:
+    build:
+      context: ./java-services
+    environment:
+      SERVER_PORT: 8081
+      SERVICE_MODE: crm
+    ports: ["8081:8081"]
+
+  java-ops:
+    build:
+      context: ./java-services
+    environment:
+      SERVER_PORT: 8082
+      SERVICE_MODE: ops
+    ports: ["8082:8082"]
+
+  python-gateway:
+    build: ./python-gateway
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mcp:mcp@postgres:5432/mcp
+      REDIS_URL: redis://redis:6379/0
+      CRM_MCP_URL: http://java-crm:8081/mcp
+      OPS_MCP_URL: http://java-ops:8082/mcp
+    ports: ["8000:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      java-crm:
+        condition: service_started
+      java-ops:
+        condition: service_started

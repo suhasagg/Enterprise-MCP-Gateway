@@ -1,0 +1,17 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  application:
+    name: enterprise-mcp-service
+  ai:
+    mcp:
+      server:
+        name: ${SERVICE_MODE:crm}-mcp-server
+        version: 1.0.0
+        protocol: STREAMABLE
+        type: ASYNC
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
